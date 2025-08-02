@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  body {
+    @apply bg-gray-50 text-gray-900;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-white rounded-lg shadow-sm border border-gray-200;
+  }
+  
+  .btn-primary {
+    @apply bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 transition-colors;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-900 px-4 py-2 rounded-md hover:bg-gray-300 transition-colors;
+  }
+  
+  .tree-node {
+    @apply cursor-pointer transition-all duration-300;
+  }
+  
+  .tree-node:hover {
+    @apply transform scale-105;
+  }
+  
+  .node-selected {
+    @apply ring-2 ring-primary-500 ring-opacity-75;
+  }
+  
+  .node-mcts-active {
+    @apply animate-pulse-slow ring-2 ring-yellow-400;
+  }
+  
+  .node-best-path {
+    @apply ring-2 ring-green-500;
+  }
+  
+  .prose {
+    @apply max-w-none;
+  }
+}
