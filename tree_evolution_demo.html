@@ -298,56 +298,164 @@
         let currentLinks = [];
         let mctsStep = 0;
 
-        // MCTS sequence for incremental building
+        // MCTS sequence for incremental building - Real API calls
         const mctsSequence = [
-            { name: "Root\nAPI Call", score: 0.5, x: 0, y: 0, parent: null, id: 0 },
-            { name: "GET /stocks\n{symbol: NVDA}", score: 0.65, x: -250, y: 120, parent: 0, id: 1 },
-            { name: "GET /market\n{sector: tech}", score: 0.58, x: 0, y: 120, parent: 0, id: 2 },
-            { name: "POST /analysis\n{data: combined}", score: 0.71, x: 250, y: 120, parent: 0, id: 3 },
-            { name: "Process\nResponse", score: 0.72, x: -350, y: 240, parent: 1, id: 4 },
-            { name: "Error\nHandling", score: 0.68, x: -150, y: 240, parent: 1, id: 5 },
-            { name: "Filter\nResults", score: 0.62, x: 0, y: 240, parent: 2, id: 6 },
-            { name: "ML Model\nPrediction", score: 0.82, x: 250, y: 240, parent: 3, id: 7 },
-            { name: "Format\nData", score: 0.75, x: -400, y: 360, parent: 4, id: 8 },
-            { name: "Calculate\nMetrics", score: 0.78, x: -300, y: 360, parent: 4, id: 9 },
-            { name: "Retry\nLogic", score: 0.70, x: -150, y: 360, parent: 5, id: 10 },
-            { name: "Sort by\nVolume", score: 0.64, x: -50, y: 360, parent: 6, id: 11 },
-            { name: "Top 10\nStocks", score: 0.66, x: 50, y: 360, parent: 6, id: 12 },
-            { name: "Feature\nEngineering", score: 0.85, x: 200, y: 360, parent: 7, id: 13 },
-            { name: "Ensemble\nMethod", score: 0.88, x: 300, y: 360, parent: 7, id: 14 }
+            { name: "START\nComposition", score: 0.5, x: 0, y: 0, parent: null, id: 0 },
+            { name: "GET /stocks/price\n{symbol: NVDA}", score: 0.65, x: -250, y: 120, parent: 0, id: 1 },
+            { name: "GET /news/search\n{query: NVIDIA}", score: 0.58, x: 0, y: 120, parent: 0, id: 2 },
+            { name: "GET /market/sector\n{sector: tech}", score: 0.71, x: 250, y: 120, parent: 0, id: 3 },
+            { name: "POST /sentiment/analyze\n{text: news_data}", score: 0.72, x: -350, y: 240, parent: 1, id: 4 },
+            { name: "GET /stocks/history\n{symbol: NVDA, days: 30}", score: 0.68, x: -150, y: 240, parent: 1, id: 5 },
+            { name: "POST /nlp/extract\n{text: news, entities: true}", score: 0.62, x: 0, y: 240, parent: 2, id: 6 },
+            { name: "GET /analytics/trends\n{sector: tech, period: 1M}", score: 0.82, x: 250, y: 240, parent: 3, id: 7 },
+            { name: "POST /ml/predict\n{model: stock_price}", score: 0.75, x: -400, y: 360, parent: 4, id: 8 },
+            { name: "GET /risk/calculate\n{portfolio: [NVDA]}", score: 0.78, x: -300, y: 360, parent: 4, id: 9 },
+            { name: "POST /cache/store\n{key: nvda_data, ttl: 300}", score: 0.70, x: -150, y: 360, parent: 5, id: 10 },
+            { name: "GET /social/mentions\n{symbol: NVDA, platform: twitter}", score: 0.64, x: -50, y: 360, parent: 6, id: 11 },
+            { name: "POST /viz/chart\n{type: candlestick, data: prices}", score: 0.66, x: 50, y: 360, parent: 6, id: 12 },
+            { name: "GET /competitors/list\n{symbol: NVDA, limit: 5}", score: 0.85, x: 200, y: 360, parent: 7, id: 13 },
+            { name: "POST /report/generate\n{template: financial_summary}", score: 0.88, x: 300, y: 360, parent: 7, id: 14 }
         ];
 
-        // Evolution steps data
-        const evolutionSteps = [
+        // Initial population of API chains from MCTS
+        const initialPopulation = [
             {
-                title: "🎯 Selection Phase",
-                description: "Selecting high-scoring nodes from MCTS tree",
-                score: "Best path: 0.88",
-                mutation: "Selected: ML Model → Feature Engineering → Ensemble Method"
+                id: 1,
+                chain: "GET /stocks/price → POST /sentiment/analyze → POST /ml/predict → POST /report/generate",
+                score: 0.88,
+                fitness: "High"
             },
             {
-                title: "🧬 Mutation 1: Parameter Tuning",
-                description: "Optimizing API parameters",
-                score: "New score: 0.91",
-                mutation: "Added: {batch_size: 32, learning_rate: 0.001}"
+                id: 2, 
+                chain: "GET /market/sector → GET /analytics/trends → GET /competitors/list → POST /viz/chart",
+                score: 0.85,
+                fitness: "High"
             },
             {
-                title: "🔄 Mutation 2: Function Composition",
-                description: "Combining multiple API calls",
-                score: "New score: 0.94",
-                mutation: "Composed: parallel_fetch() + aggregate_results()"
+                id: 3,
+                chain: "GET /news/search → POST /nlp/extract → GET /social/mentions → POST /cache/store",
+                score: 0.78,
+                fitness: "Medium"
             },
             {
-                title: "⚡ Mutation 3: Caching Strategy",
-                description: "Adding intelligent caching layer",
-                score: "New score: 0.97",
-                mutation: "Added: redis_cache() with TTL optimization"
+                id: 4,
+                chain: "GET /stocks/history → GET /risk/calculate → POST /viz/chart → POST /report/generate", 
+                score: 0.82,
+                fitness: "High"
             },
             {
-                title: "🎉 Evolution Complete",
-                description: "Optimal solution found!",
-                score: "Final score: 0.97 (+9% improvement)",
-                mutation: "Ready for production deployment"
+                id: 5,
+                chain: "GET /stocks/price → GET /stocks/history → POST /cache/store → POST /viz/chart",
+                score: 0.75,
+                fitness: "Medium"
+            }
+        ];
+
+        // Evolution generations showing mutations and improvements
+        const evolutionGenerations = [
+            {
+                title: "🧬 Generation 1: Initial Population",
+                description: "Top 5 API chains selected from MCTS exploration",
+                population: initialPopulation,
+                bestScore: 0.88
+            },
+            {
+                title: "🔄 Generation 2: Crossover & Mutation",
+                description: "Combining best chains and adding mutations",
+                population: [
+                    {
+                        id: 1,
+                        chain: "GET /stocks/price → POST /sentiment/analyze → POST /ml/predict → POST /report/generate",
+                        score: 0.88,
+                        fitness: "High",
+                        status: "Survived"
+                    },
+                    {
+                        id: 6,
+                        chain: "GET /market/sector → GET /analytics/trends → POST /ml/predict → POST /report/generate",
+                        score: 0.91,
+                        fitness: "High",
+                        status: "New - Crossover of #1 & #2"
+                    },
+                    {
+                        id: 7,
+                        chain: "GET /stocks/price → POST /sentiment/analyze → GET /risk/calculate → POST /viz/chart",
+                        score: 0.89,
+                        fitness: "High", 
+                        status: "New - Mutation of #1"
+                    },
+                    {
+                        id: 4,
+                        chain: "GET /stocks/history → GET /risk/calculate → POST /viz/chart → POST /report/generate",
+                        score: 0.82,
+                        fitness: "High",
+                        status: "Survived"
+                    },
+                    {
+                        id: 8,
+                        chain: "GET /news/search → POST /nlp/extract → POST /ml/predict → POST /cache/store",
+                        score: 0.86,
+                        fitness: "High",
+                        status: "New - Enhanced #3"
+                    }
+                ],
+                bestScore: 0.91
+            },
+            {
+                title: "⚡ Generation 3: Optimization",
+                description: "Fine-tuning parameters and adding caching",
+                population: [
+                    {
+                        id: 6,
+                        chain: "GET /market/sector → GET /analytics/trends → POST /ml/predict → POST /report/generate",
+                        score: 0.91,
+                        fitness: "High",
+                        status: "Survived"
+                    },
+                    {
+                        id: 9,
+                        chain: "GET /stocks/price → POST /cache/store → POST /sentiment/analyze → POST /ml/predict → POST /report/generate",
+                        score: 0.94,
+                        fitness: "Excellent",
+                        status: "New - Added caching layer"
+                    },
+                    {
+                        id: 10,
+                        chain: "GET /market/sector → POST /cache/store → GET /analytics/trends → POST /ml/predict → POST /viz/chart",
+                        score: 0.93,
+                        fitness: "Excellent", 
+                        status: "New - Parallel processing"
+                    },
+                    {
+                        id: 7,
+                        chain: "GET /stocks/price → POST /sentiment/analyze → GET /risk/calculate → POST /viz/chart",
+                        score: 0.89,
+                        fitness: "High",
+                        status: "Survived"
+                    },
+                    {
+                        id: 11,
+                        chain: "GET /news/search → POST /nlp/extract → GET /social/mentions → POST /ml/predict → POST /report/generate",
+                        score: 0.92,
+                        fitness: "Excellent",
+                        status: "New - Social sentiment integration"
+                    }
+                ],
+                bestScore: 0.94
+            },
+            {
+                title: "🎉 Final Generation: Optimal Solution",
+                description: "Best performing API chain evolved!",
+                population: [
+                    {
+                        id: 9,
+                        chain: "GET /stocks/price → POST /cache/store → POST /sentiment/analyze → POST /ml/predict → POST /report/generate",
+                        score: 0.94,
+                        fitness: "WINNER",
+                        status: "🏆 Optimal Solution Found!"
+                    }
+                ],
+                bestScore: 0.94
             }
         ];
 
@@ -525,34 +633,55 @@
             const evolutionContainer = document.getElementById("evolutionSteps");
             evolutionContainer.innerHTML = "";
 
-            evolutionSteps.forEach((step, index) => {
-                const stepDiv = document.createElement("div");
-                stepDiv.className = "evolution-step";
-                stepDiv.innerHTML = `
-                    <h4>${step.title}</h4>
-                    <p>${step.description}</p>
-                    <div class="score">${step.score}</div>
-                    <div class="mutation">${step.mutation}</div>
-                `;
-                evolutionContainer.appendChild(stepDiv);
+            evolutionGenerations.forEach((generation, genIndex) => {
+                const genDiv = document.createElement("div");
+                genDiv.className = "evolution-step";
+                
+                let populationHTML = "";
+                generation.population.forEach((individual, i) => {
+                    const statusColor = individual.fitness === "WINNER" ? "#FFD700" : 
+                                       individual.fitness === "Excellent" ? "#4CAF50" :
+                                       individual.fitness === "High" ? "#2196F3" : "#FF9800";
+                    
+                    populationHTML += `
+                        <div style="margin: 8px 0; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 5px; border-left: 3px solid ${statusColor};">
+                            <div style="font-size: 11px; font-weight: bold;">#${individual.id}: ${individual.chain}</div>
+                            <div style="font-size: 10px; margin-top: 4px;">
+                                <span style="color: #4CAF50;">Score: ${individual.score}</span> | 
+                                <span style="color: ${statusColor};">Fitness: ${individual.fitness}</span>
+                                ${individual.status ? ` | <span style="color: #81C784; font-style: italic;">${individual.status}</span>` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
 
-                // Animate each step
+                genDiv.innerHTML = `
+                    <h4>${generation.title}</h4>
+                    <p>${generation.description}</p>
+                    <div style="font-weight: bold; color: #4CAF50; margin: 10px 0;">Best Score: ${generation.bestScore}</div>
+                    <div style="max-height: 200px; overflow-y: auto;">
+                        ${populationHTML}
+                    </div>
+                `;
+                evolutionContainer.appendChild(genDiv);
+
+                // Animate each generation
                 animationTimeout = setTimeout(() => {
                     if (!isRunning || isPaused) return;
                     
-                    stepDiv.classList.add("active");
+                    genDiv.classList.add("active");
                     
-                    if (index === evolutionSteps.length - 1) {
-                        // Final step - mark evolved nodes
+                    if (genIndex === evolutionGenerations.length - 1) {
+                        // Final generation - mark evolved nodes
                         setTimeout(() => {
                             if (isRunning && !isPaused) {
                                 markEvolvedNodes();
-                                updateStatus("✅ Evolution complete! Optimal solution achieved.");
+                                updateStatus("✅ Evolution complete! Optimal API chain discovered: Score 0.94 (+6% improvement)");
                                 isRunning = false;
                             }
-                        }, 1000);
+                        }, 1500);
                     }
-                }, index * 1800);
+                }, genIndex * 2500);
             });
         }
 
