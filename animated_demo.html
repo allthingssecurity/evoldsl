@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCTS + GPT-4o + Evolution Animation Demo</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            overflow-x: auto;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .title {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .subtitle {
+            text-align: center;
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        
+        .demo-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        
+        .phase {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 25px;
+            border-left: 5px solid;
+            opacity: 0.3;
+            transition: all 0.5s ease;
+        }
+        
+        .phase.active {
+            opacity: 1;
+            transform: scale(1.02);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .phase-mcts { border-left-color: #fbbf24; }
+        .phase-evolution { border-left-color: #f97316; }
+        .phase-result { border-left-color: #10b981; }
+        
+        .phase-title {
+            font-size: 1.8em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .phase-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+        }
+        
+        .mcts-icon { background: #fbbf24; color: #92400e; }
+        .evolution-icon { background: #f97316; color: #9a3412; }
+        .result-icon { background: #10b981; color: #047857; }
+        
+        .api-chain {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .api-node {
+            background: #3b82f6;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideIn 0.5s ease forwards;
+            position: relative;
+        }
+        
+        .api-node.start { background: #10b981; }
+        .api-node.data-source { background: #3b82f6; }
+        .api-node.analysis { background: #8b5cf6; }
+        .api-node.processing { background: #f59e0b; }
+        .api-node.visualization { background: #ef4444; }
+        .api-node.output { background: #06b6d4; }
+        
+        .arrow {
+            font-size: 1.5em;
+            color: #94a3b8;
+            opacity: 0;
+            animation: fadeIn 0.3s ease forwards;
+        }
+        
+        .iteration-info {
+            font-size: 0.9em;
+            color: #e2e8f0;
+            margin-bottom: 10px;
+        }
+        
+        .score {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .controls {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #3b82f6);
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 3px;
+        }
+        
+        .gpt4o-thinking {
+            background: rgba(251, 191, 36, 0.2);
+            border: 1px dashed #fbbf24;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            font-style: italic;
+            opacity: 0;
+            animation: pulse 1s ease-in-out infinite;
+        }
+        
+        .population {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .candidate {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .candidate.best {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.2);
+        }
+        
+        .candidate.mutated {
+            border-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.2);
+        }
+        
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+        
+        .example-goal {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid #3b82f6;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .final-result {
+            background: linear-gradient(45deg, #10b981, #059669);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .improvement {
+            color: #10b981;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">🧠 MCTS + GPT-4o + Evolution Demo</h1>
+        <p class="subtitle">Watch how the system discovers novel API composition scenarios</p>
+        
+        <div class="example-goal">
+            <strong>🎯 Goal:</strong> Create a comprehensive financial risk dashboard for NVIDIA stock
+        </div>
+        
+        <div class="controls">
+            <button class="btn" onclick="startDemo()" id="startBtn">▶️ Start Demo</button>
+            <button class="btn" onclick="resetDemo()" id="resetBtn">🔄 Reset</button>
+            <button class="btn" onclick="skipToEvolution()" id="skipBtn" disabled>⏭️ Skip to Evolution</button>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <div class="demo-container">
+            <!-- Phase 1: MCTS Exploration -->
+            <div class="phase phase-mcts" id="mctsPhase">
+                <div class="phase-title">
+                    <div class="phase-icon mcts-icon">🌳</div>
+                    Phase 1: MCTS Tree Search Exploration
+                </div>
+                
+                <div class="gpt4o-thinking" id="gpt4oThinking" style="display: none;">
+                    🤖 GPT-4o: "For financial risk dashboard, I should start with stock data..."
+                </div>
+                
+                <div id="mctsIterations">
+                    <!-- MCTS iterations will be populated here -->
+                </div>
+                
+                <div id="mctsResults" style="display: none;">
+                    <h4>🏆 Top 5 Chains Found by MCTS:</h4>
+                    <div id="topChains"></div>
+                </div>
+            </div>
+            
+            <!-- Phase 2: Evolution Optimization -->
+            <div class="phase phase-evolution" id="evolutionPhase">
+                <div class="phase-title">
+                    <div class="phase-icon evolution-icon">🧬</div>
+                    Phase 2: Evolution Optimization
+                </div>
+                
+                <div class="gpt4o-thinking" id="evolutionThinking" style="display: none;">
+                    🤖 GPT-4o: "Let me improve these chains by adding social sentiment analysis..."
+                </div>
+                
+                <div id="evolutionGenerations">
+                    <!-- Evolution generations will be populated here -->
+                </div>
+            </div>
+            
+            <!-- Phase 3: Final Result -->
+            <div class="phase phase-result" id="resultPhase">
+                <div class="phase-title">
+                    <div class="phase-icon result-icon">🎯</div>
+                    Final Optimized API Chain
+                </div>
+                
+                <div id="finalResult">
+                    <!-- Final result will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 0;
+        let isRunning = false;
+        
+        // Demo data
+        const mctsIterations = [
+            {
+                iteration: 1,
+                thinking: "For financial risk dashboard, I should start with stock data...",
+                chain: ["START", "get_stock_data"],
+                score: 0.3
+            },
+            {
+                iteration: 3,
+                thinking: "Adding risk calculation to analyze the stock data...",
+                chain: ["START", "get_stock_data", "calculate_risk"],
+                score: 0.5
+            },
+            {
+                iteration: 7,
+                thinking: "News sentiment could provide valuable context...",
+                chain: ["START", "get_stock_data", "search_news", "analyze_sentiment"],
+                score: 0.6
+            },
+            {
+                iteration: 12,
+                thinking: "Let me create a visualization for the risk data...",
+                chain: ["START", "get_stock_data", "calculate_risk", "create_chart"],
+                score: 0.7
+            },
+            {
+                iteration: 15,
+                thinking: "Finally, generate a comprehensive report...",
+                chain: ["START", "get_stock_data", "calculate_risk", "create_chart", "generate_report"],
+                score: 0.75
+            }
+        ];
+        
+        const topChains = [
+            {
+                chain: ["START", "get_stock_data", "calculate_risk", "create_chart", "generate_report"],
+                score: 0.75,
+                rank: 1
+            },
+            {
+                chain: ["START", "search_news", "analyze_sentiment", "summarize_text", "generate_report"],
+                score: 0.68,
+                rank: 2
+            },
+            {
+                chain: ["START", "get_stock_data", "analyze_trend", "create_chart"],
+                score: 0.62,
+                rank: 3
+            },
+            {
+                chain: ["START", "get_company_info", "search_patents", "analyze_competition"],
+                score: 0.58,
+                rank: 4
+            },
+            {
+                chain: ["START", "get_social_mentions", "analyze_sentiment", "create_timeline"],
+                score: 0.55,
+                rank: 5
+            }
+        ];
+        
+        const evolutionGenerations = [
+            {
+                generation: 1,
+                thinking: "Let me improve the best chain by adding social sentiment...",
+                mutations: [
+                    {
+                        chain: ["START", "get_stock_data", "get_social_mentions", "calculate_risk", "create_chart", "generate_report"],
+                        score: 0.82,
+                        type: "added social data"
+                    },
+                    {
+                        chain: ["START", "get_stock_data", "search_news", "calculate_risk", "create_chart", "generate_report"],
+                        score: 0.79,
+                        type: "added news analysis"
+                    }
+                ]
+            },
+            {
+                generation: 3,
+                thinking: "Combining multiple data sources for better analysis...",
+                mutations: [
+                    {
+                        chain: ["START", "get_stock_data", "search_news", "analyze_sentiment", "merge_datasets", "calculate_risk", "predict_price", "create_dashboard"],
+                        score: 0.89,
+                        type: "merged data sources"
+                    }
+                ]
+            },
+            {
+                generation: 5,
+                thinking: "Adding real-time alerts for risk management...",
+                mutations: [
+                    {
+                        chain: ["START", "get_stock_data", "search_news", "get_social_mentions", "analyze_sentiment", "merge_datasets", "calculate_risk", "predict_price", "create_dashboard", "send_alert"],
+                        score: 0.94,
+                        type: "added alerting system"
+                    }
+                ]
+            }
+        ];
+        
+        function getAPINodeClass(apiName) {
+            if (apiName === "START") return "start";
+            if (["get_stock_data", "search_news", "get_social_mentions", "get_company_info"].includes(apiName)) return "data-source";
+            if (["analyze_sentiment", "calculate_risk", "analyze_trend", "predict_price"].includes(apiName)) return "analysis";
+            if (["merge_datasets", "summarize_text", "filter_relevant"].includes(apiName)) return "processing";
+            if (["create_chart", "create_dashboard", "create_timeline"].includes(apiName)) return "visualization";
+            if (["generate_report", "send_alert", "export_data"].includes(apiName)) return "output";
+            return "data-source";
+        }
+        
+        function createAPIChain(chain, score, containerId, delay = 0) {
+            const container = document.getElementById(containerId);
+            const chainDiv = document.createElement('div');
+            chainDiv.className = 'api-chain';
+            
+            chain.forEach((api, index) => {
+                setTimeout(() => {
+                    const nodeDiv = document.createElement('div');
+                    nodeDiv.className = `api-node ${getAPINodeClass(api)}`;
+                    nodeDiv.textContent = api.replace(/_/g, ' ').toUpperCase();
+                    nodeDiv.style.animationDelay = `${index * 0.1}s`;
+                    chainDiv.appendChild(nodeDiv);
+                    
+                    if (index < chain.length - 1) {
+                        const arrow = document.createElement('div');
+                        arrow.className = 'arrow';
+                        arrow.textContent = '→';
+                        arrow.style.animationDelay = `${(index + 0.5) * 0.1}s`;
+                        chainDiv.appendChild(arrow);
+                    }
+                }, delay + index * 200);
+            });
+            
+            if (score) {
+                setTimeout(() => {
+                    const scoreDiv = document.createElement('div');
+                    scoreDiv.className = 'score';
+                    scoreDiv.textContent = `Score: ${score}`;
+                    chainDiv.appendChild(scoreDiv);
+                }, delay + chain.length * 200);
+            }
+            
+            container.appendChild(chainDiv);
+        }
+        
+        async function startDemo() {
+            if (isRunning) return;
+            isRunning = true;
+            
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('skipBtn').disabled = false;
+            
+            // Reset phases
+            document.querySelectorAll('.phase').forEach(phase => {
+                phase.classList.remove('active');
+            });
+            
+            // Clear previous content
+            document.getElementById('mctsIterations').innerHTML = '';
+            document.getElementById('topChains').innerHTML = '';
+            document.getElementById('evolutionGenerations').innerHTML = '';
+            document.getElementById('finalResult').innerHTML = '';
+            
+            // Phase 1: MCTS
+            document.getElementById('mctsPhase').classList.add('active');
+            updateProgress(10);
+            
+            for (let i = 0; i < mctsIterations.length; i++) {
+                const iteration = mctsIterations[i];
+                
+                // Show GPT-4o thinking
+                const thinkingDiv = document.getElementById('gpt4oThinking');
+                thinkingDiv.textContent = `🤖 GPT-4o: "${iteration.thinking}"`;
+                thinkingDiv.style.display = 'block';
+                
+                await sleep(1500);
+                
+                // Create iteration container
+                const iterationDiv = document.createElement('div');
+                iterationDiv.innerHTML = `<div class="iteration-info">Iteration ${iteration.iteration}:</div>`;
+                document.getElementById('mctsIterations').appendChild(iterationDiv);
+                
+                createAPIChain(iteration.chain, iteration.score, 'mctsIterations');
+                
+                updateProgress(10 + (i + 1) * 8);
+                await sleep(2000);
+            }
+            
+            // Hide thinking
+            document.getElementById('gpt4oThinking').style.display = 'none';
+            
+            // Show MCTS results
+            await sleep(1000);
+            document.getElementById('mctsResults').style.display = 'block';
+            
+            topChains.forEach((chainData, index) => {
+                setTimeout(() => {
+                    const chainDiv = document.createElement('div');
+                    chainDiv.innerHTML = `<div class="iteration-info">Rank ${chainData.rank}:</div>`;
+                    document.getElementById('topChains').appendChild(chainDiv);
+                    createAPIChain(chainData.chain, chainData.score, 'topChains');
+                }, index * 800);
+            });
+            
+            await sleep(4000);
+            updateProgress(60);
+            
+            // Phase 2: Evolution
+            document.getElementById('evolutionPhase').classList.add('active');
+            
+            for (let i = 0; i < evolutionGenerations.length; i++) {
+                const generation = evolutionGenerations[i];
+                
+                // Show GPT-4o thinking
+                const thinkingDiv = document.getElementById('evolutionThinking');
+                thinkingDiv.textContent = `🤖 GPT-4o: "${generation.thinking}"`;
+                thinkingDiv.style.display = 'block';
+                
+                await sleep(1500);
+                
+                // Create generation container
+                const genDiv = document.createElement('div');
+                genDiv.innerHTML = `<div class="iteration-info">Generation ${generation.generation}:</div>`;
+                document.getElementById('evolutionGenerations').appendChild(genDiv);
+                
+                // Show mutations
+                generation.mutations.forEach((mutation, index) => {
+                    setTimeout(() => {
+                        const mutationDiv = document.createElement('div');
+                        mutationDiv.className = 'candidate mutated';
+                        mutationDiv.innerHTML = `<div style="margin-bottom: 10px;"><strong>Mutation:</strong> ${mutation.type}</div>`;
+                        document.getElementById('evolutionGenerations').appendChild(mutationDiv);
+                        
+                        createAPIChain(mutation.chain, mutation.score, 'evolutionGenerations');
+                    }, index * 1000);
+                });
+                
+                updateProgress(60 + (i + 1) * 10);
+                await sleep(3000);
+            }
+            
+            // Hide thinking
+            document.getElementById('evolutionThinking').style.display = 'none';
+            
+            await sleep(1000);
+            updateProgress(90);
+            
+            // Phase 3: Final Result
+            document.getElementById('resultPhase').classList.add('active');
+            
+            const finalChain = ["START", "get_stock_data", "search_news", "get_social_mentions", "analyze_sentiment", "merge_datasets", "calculate_risk", "predict_price", "create_dashboard", "send_alert"];
+            
+            document.getElementById('finalResult').innerHTML = `
+                <div class="final-result">
+                    <h3>🎉 Optimized Financial Risk Dashboard</h3>
+                    <p>Evolution improved the original chain from <strong>0.75</strong> to <strong>0.94</strong></p>
+                    <p class="improvement">+25% improvement through intelligent evolution!</p>
+                </div>
+            `;
+            
+            createAPIChain(finalChain, 0.94, 'finalResult', 1000);
+            
+            updateProgress(100);
+            
+            await sleep(2000);
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('skipBtn').disabled = true;
+            isRunning = false;
+        }
+        
+        function skipToEvolution() {
+            // Implementation for skipping to evolution phase
+            console.log("Skipping to evolution phase...");
+        }
+        
+        function resetDemo() {
+            if (isRunning) return;
+            
+            // Reset all phases
+            document.querySelectorAll('.phase').forEach(phase => {
+                phase.classList.remove('active');
+            });
+            
+            // Clear content
+            document.getElementById('mctsIterations').innerHTML = '';
+            document.getElementById('topChains').innerHTML = '';
+            document.getElementById('evolutionGenerations').innerHTML = '';
+            document.getElementById('finalResult').innerHTML = '';
+            document.getElementById('mctsResults').style.display = 'none';
+            document.getElementById('gpt4oThinking').style.display = 'none';
+            document.getElementById('evolutionThinking').style.display = 'none';
+            
+            // Reset progress
+            updateProgress(0);
+            
+            // Reset buttons
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('skipBtn').disabled = true;
+        }
+        
+        function updateProgress(percentage) {
+            document.getElementById('progressFill').style.width = percentage + '%';
+        }
+        
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+    </script>
+</body>
+</html>
