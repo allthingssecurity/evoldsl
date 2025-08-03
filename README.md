@@ -4,6 +4,8 @@ An intelligent API composition system that uses **MCTS (Monte Carlo Tree Search)
 
 ![Architecture](architecture_diagram.svg)
 
+*Clean 3-phase architecture showing MCTS exploration, Evolution optimization, and Self-Evolution for continuous improvement*
+
 ## 🚀 Features
 
 - **GPT-4o Neural Guidance**: Uses GPT-4o as both policy and value network for intelligent API selection
@@ -253,72 +255,7 @@ Chain B2: Stock → News → Risk → Chart (added news)
 
 This creates a system that **never stops discovering** novel API composition scenarios!
 
-## 🍕 Simple Explanation: The Pizza Analogy
 
-Think of building API compositions like **making the perfect pizza**:
-
-### **MCTS = Smart Chef** 🧑‍🍳
-- Tries different ingredient combinations systematically
-- "Let me try pepperoni... now add mushrooms... now cheese..."
-- GPT-4o guides: "Based on customer preferences, try adding basil next"
-- Finds 5 good pizza recipes (API chains)
-
-### **Evolution = Recipe Improver** 🧬  
-- Takes those 5 good pizzas and creates variations
-- Makes small changes: "What if I add more cheese? Less sauce? Different crust?"
-- Creates a **population** of 10 pizza variations
-- Keeps the tastiest ones, discards the bad ones
-- Repeats to make them even better over generations
-
-### **Real Example: Financial Dashboard**
-
-**MCTS Exploration:**
-```
-Iteration 1: START → get_stock_data("AAPL")
-Iteration 5: START → get_stock_data → calculate_risk  
-Iteration 10: START → get_stock_data → search_news → analyze_sentiment
-Iteration 15: START → get_stock_data → calculate_risk → create_chart → generate_report
-```
-
-**Evolution Optimization:**
-```
-Generation 1: 5 different financial API chains
-Best: Stock → Risk → Chart → Report (Score: 0.75)
-
-Generation 3: Evolved variations  
-Better: Stock → News → Sentiment → Risk → Prediction → Dashboard (Score: 0.85)
-
-Generation 5: Further optimized
-Best: Stock → News → Social → Sentiment → Risk → Timeline → Alert → Dashboard (Score: 0.92)
-```
-
-### **Self-Evolution: Never-Ending Improvement** ♾️
-
-The system keeps evolving forever by:
-
-1. **New Ingredients (APIs)**: Automatically discovers and adds new APIs
-   - Month 1: 25 APIs (basic financial)
-   - Month 6: 40 APIs (added social media)  
-   - Month 12: 60 APIs (added crypto, ESG, supply chain)
-
-2. **Changing Tastes (Goals)**: Adapts to new business needs
-   - January: "Create fastest dashboard"
-   - June: "Optimize for accuracy" 
-   - December: "Minimize costs"
-
-3. **New Customers (Domains)**: Expands to new business areas
-   - Start: Financial analysis
-   - Later: Healthcare, retail, manufacturing
-   - Future: Space exploration, quantum computing
-
-**The Never-Ending Cycle:**
-- Evolve current chains (make them better) ✅
-- Add new APIs when available (more ingredients) ✅  
-- Change goals when needs shift (new preferences) ✅
-- Expand to new domains (new customers) ✅
-- Repeat forever 🔄
-
-This creates a system that **never stops discovering** novel API composition scenarios!
 
 ## 🛡️ Type Safety
 
