@@ -6,6 +6,12 @@ An intelligent API composition system that uses **MCTS (Monte Carlo Tree Search)
 
 *Clean 3-phase architecture showing MCTS exploration, Evolution optimization, and Self-Evolution for continuous improvement*
 
+## 🎬 **Live Demo**
+
+**🚀 [View Interactive Animation Demo](https://allthingssecurity.github.io/evoldsl/animated_demo.html)**
+
+Watch the complete MCTS + Evolution process in action with a real financial dashboard example!
+
 ## 🚀 Features
 
 - **GPT-4o Neural Guidance**: Uses GPT-4o as both policy and value network for intelligent API selection
