@@ -16,7 +16,7 @@
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
         }
 
@@ -43,12 +43,12 @@
         }
 
         .tree-container {
-            flex: 2;
+            flex: 2.5;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 15px;
             padding: 20px;
             backdrop-filter: blur(10px);
-            min-height: 600px;
+            min-height: 700px;
         }
 
         .evolution-panel {
@@ -57,7 +57,7 @@
             border-radius: 15px;
             padding: 20px;
             backdrop-filter: blur(10px);
-            min-height: 600px;
+            min-height: 700px;
         }
 
         .controls {
@@ -98,6 +98,16 @@
             overflow: visible;
         }
 
+        .empty-tree {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 600px;
+            font-size: 1.5em;
+            opacity: 0.6;
+            font-style: italic;
+        }
+
         .node {
             cursor: pointer;
             transition: all 0.3s ease;
@@ -132,7 +142,7 @@
         }
 
         .node text {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
             text-anchor: middle;
             fill: white;
@@ -249,7 +259,9 @@
         <div class="demo-container">
             <div class="tree-container">
                 <h3 style="text-align: center; margin-bottom: 20px;">🌳 MCTS Exploration Tree</h3>
-                <svg class="tree-svg" id="treeSvg"></svg>
+                <div id="treeArea">
+                    <div class="empty-tree">Click "Start Demo" to watch MCTS build the tree</div>
+                </div>
                 <div class="legend">
                     <div class="legend-item">
                         <div class="legend-circle" style="background: #4CAF50; border-color: #2E7D32;"></div>
@@ -280,65 +292,30 @@
     <script>
         let isRunning = false;
         let isPaused = false;
-        let currentStep = 0;
         let animationTimeout;
+        let svg, g;
+        let currentNodes = [];
+        let currentLinks = [];
+        let mctsStep = 0;
 
-        // Tree data structure
-        const treeData = {
-            name: "Root\nAPI Call",
-            score: 0.5,
-            children: [
-                {
-                    name: "GET /stocks\n{symbol: NVDA}",
-                    score: 0.65,
-                    children: [
-                        {
-                            name: "Process\nResponse",
-                            score: 0.72,
-                            children: [
-                                { name: "Format\nData", score: 0.75 },
-                                { name: "Calculate\nMetrics", score: 0.78 }
-                            ]
-                        },
-                        {
-                            name: "Error\nHandling",
-                            score: 0.68,
-                            children: [
-                                { name: "Retry\nLogic", score: 0.70 }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    name: "GET /market\n{sector: tech}",
-                    score: 0.58,
-                    children: [
-                        {
-                            name: "Filter\nResults",
-                            score: 0.62,
-                            children: [
-                                { name: "Sort by\nVolume", score: 0.64 },
-                                { name: "Top 10\nStocks", score: 0.66 }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    name: "POST /analysis\n{data: combined}",
-                    score: 0.71,
-                    children: [
-                        {
-                            name: "ML Model\nPrediction",
-                            score: 0.82,
-                            children: [
-                                { name: "Feature\nEngineering", score: 0.85 },
-                                { name: "Ensemble\nMethod", score: 0.88 }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        };
+        // MCTS sequence for incremental building
+        const mctsSequence = [
+            { name: "Root\nAPI Call", score: 0.5, x: 0, y: 0, parent: null, id: 0 },
+            { name: "GET /stocks\n{symbol: NVDA}", score: 0.65, x: -250, y: 120, parent: 0, id: 1 },
+            { name: "GET /market\n{sector: tech}", score: 0.58, x: 0, y: 120, parent: 0, id: 2 },
+            { name: "POST /analysis\n{data: combined}", score: 0.71, x: 250, y: 120, parent: 0, id: 3 },
+            { name: "Process\nResponse", score: 0.72, x: -350, y: 240, parent: 1, id: 4 },
+            { name: "Error\nHandling", score: 0.68, x: -150, y: 240, parent: 1, id: 5 },
+            { name: "Filter\nResults", score: 0.62, x: 0, y: 240, parent: 2, id: 6 },
+            { name: "ML Model\nPrediction", score: 0.82, x: 250, y: 240, parent: 3, id: 7 },
+            { name: "Format\nData", score: 0.75, x: -400, y: 360, parent: 4, id: 8 },
+            { name: "Calculate\nMetrics", score: 0.78, x: -300, y: 360, parent: 4, id: 9 },
+            { name: "Retry\nLogic", score: 0.70, x: -150, y: 360, parent: 5, id: 10 },
+            { name: "Sort by\nVolume", score: 0.64, x: -50, y: 360, parent: 6, id: 11 },
+            { name: "Top 10\nStocks", score: 0.66, x: 50, y: 360, parent: 6, id: 12 },
+            { name: "Feature\nEngineering", score: 0.85, x: 200, y: 360, parent: 7, id: 13 },
+            { name: "Ensemble\nMethod", score: 0.88, x: 300, y: 360, parent: 7, id: 14 }
+        ];
 
         // Evolution steps data
         const evolutionSteps = [
@@ -374,34 +351,11 @@
             }
         ];
 
-        let svg, g, tree, root;
-        let currentNodes = [];
-        let currentLinks = [];
-        let mctsStep = 0;
-
-        // Flatten tree data for incremental building
-        const mctsSequence = [
-            { name: "Root\nAPI Call", score: 0.5, x: 0, y: 0, parent: null, id: 0 },
-            { name: "GET /stocks\n{symbol: NVDA}", score: 0.65, x: -200, y: 100, parent: 0, id: 1 },
-            { name: "GET /market\n{sector: tech}", score: 0.58, x: 0, y: 100, parent: 0, id: 2 },
-            { name: "POST /analysis\n{data: combined}", score: 0.71, x: 200, y: 100, parent: 0, id: 3 },
-            { name: "Process\nResponse", score: 0.72, x: -300, y: 200, parent: 1, id: 4 },
-            { name: "Error\nHandling", score: 0.68, x: -100, y: 200, parent: 1, id: 5 },
-            { name: "Filter\nResults", score: 0.62, x: 0, y: 200, parent: 2, id: 6 },
-            { name: "ML Model\nPrediction", score: 0.82, x: 200, y: 200, parent: 3, id: 7 },
-            { name: "Format\nData", score: 0.75, x: -350, y: 300, parent: 4, id: 8 },
-            { name: "Calculate\nMetrics", score: 0.78, x: -250, y: 300, parent: 4, id: 9 },
-            { name: "Retry\nLogic", score: 0.70, x: -100, y: 300, parent: 5, id: 10 },
-            { name: "Sort by\nVolume", score: 0.64, x: -50, y: 300, parent: 6, id: 11 },
-            { name: "Top 10\nStocks", score: 0.66, x: 50, y: 300, parent: 6, id: 12 },
-            { name: "Feature\nEngineering", score: 0.85, x: 150, y: 300, parent: 7, id: 13 },
-            { name: "Ensemble\nMethod", score: 0.88, x: 250, y: 300, parent: 7, id: 14 }
-        ];
-
-        function initializeTree() {
+        function initializeSVG() {
+            const treeArea = document.getElementById("treeArea");
+            treeArea.innerHTML = '<svg class="tree-svg" id="treeSvg"></svg>';
+            
             const container = d3.select("#treeSvg");
-            container.selectAll("*").remove();
-
             const width = container.node().clientWidth;
             const height = container.node().clientHeight;
 
@@ -422,19 +376,11 @@
             
             isRunning = true;
             isPaused = false;
-            currentStep = 0;
             
             document.getElementById("pauseBtn").textContent = "⏸️ Pause";
-            updateStatus("🌳 MCTS exploring solution space...");
+            updateStatus("🌳 Starting MCTS exploration...");
             
-            initializeTree();
-            runMCTSPhase();
-        }
-
-        function runMCTSPhase() {
-            if (!isRunning || isPaused) return;
-            
-            mctsStep = 0;
+            initializeSVG();
             buildTreeIncremental();
         }
 
@@ -452,7 +398,7 @@
             }
 
             const nodeData = mctsSequence[mctsStep];
-            updateStatus(`🌳 MCTS Iteration ${mctsStep + 1}: Exploring ${nodeData.name.split('\n')[0]}...`);
+            updateStatus(`🌳 MCTS Iteration ${mctsStep + 1}: Exploring "${nodeData.name.split('\n')[0]}"...`);
 
             // Add link first if not root
             if (nodeData.parent !== null) {
@@ -464,7 +410,7 @@
                         .style("opacity", 0);
 
                     link.transition()
-                        .duration(500)
+                        .duration(600)
                         .style("opacity", 1);
 
                     currentLinks.push({ source: parentNode, target: nodeData, element: link });
@@ -478,31 +424,33 @@
                 .style("opacity", 0);
 
             nodeGroup.append("circle")
-                .attr("r", 18);
+                .attr("r", 20);
 
             nodeGroup.append("text")
-                .attr("dy", "-0.2em")
-                .style("font-size", "9px")
+                .attr("dy", "-0.3em")
+                .style("font-size", "10px")
                 .text(nodeData.name.split('\n')[0]);
 
             nodeGroup.append("text")
                 .attr("dy", "1.2em")
-                .style("font-size", "8px")
+                .style("font-size", "9px")
                 .style("opacity", 0.8)
                 .text(nodeData.score);
 
-            // Animate node appearance
+            // Animate node appearance with bounce effect
             nodeGroup.transition()
-                .duration(500)
-                .style("opacity", 1);
+                .duration(600)
+                .style("opacity", 1)
+                .attr("transform", `translate(${nodeData.x},${nodeData.y}) scale(1)`)
+                .ease(d3.easeBounce);
 
             currentNodes.push({ ...nodeData, element: nodeGroup });
             mctsStep++;
 
             // Continue building tree
-            setTimeout(() => {
+            animationTimeout = setTimeout(() => {
                 buildTreeIncremental();
-            }, 800);
+            }, 1000);
         }
 
         function selectBestPath() {
@@ -517,7 +465,7 @@
                     if (!isRunning || isPaused) return;
                     
                     node.element.classed("selected", true);
-                }, i * 300);
+                }, i * 400);
             });
 
             bestPath.links.forEach((link, i) => {
@@ -525,7 +473,7 @@
                     if (!isRunning || isPaused) return;
                     
                     link.element.classed("selected", true);
-                }, i * 300);
+                }, i * 400);
             });
 
             // Start evolution after selection
@@ -533,7 +481,7 @@
                 if (isRunning && !isPaused) {
                     startEvolution();
                 }
-            }, 2000);
+            }, 2500);
         }
 
         function findBestPathFromNodes() {
@@ -589,7 +537,7 @@
                 evolutionContainer.appendChild(stepDiv);
 
                 // Animate each step
-                setTimeout(() => {
+                animationTimeout = setTimeout(() => {
                     if (!isRunning || isPaused) return;
                     
                     stepDiv.classList.add("active");
@@ -604,19 +552,23 @@
                             }
                         }, 1000);
                     }
-                }, index * 1500);
+                }, index * 1800);
             });
         }
 
         function markEvolvedNodes() {
             // Mark selected nodes as evolved
-            g.selectAll(".node.selected")
-                .classed("evolved", true)
-                .classed("selected", false);
+            currentNodes.forEach(node => {
+                if (node.element.classed("selected")) {
+                    node.element.classed("evolved", true).classed("selected", false);
+                }
+            });
 
-            g.selectAll(".link.selected")
-                .classed("evolved", true)
-                .classed("selected", false);
+            currentLinks.forEach(link => {
+                if (link.element.classed("selected")) {
+                    link.element.classed("evolved", true).classed("selected", false);
+                }
+            });
         }
 
         function pauseDemo() {
@@ -635,7 +587,9 @@
                 btn.textContent = "⏸️ Pause";
                 updateStatus("▶️ Demo resumed");
                 // Resume from current state
-                if (currentStep < evolutionSteps.length) {
+                if (mctsStep < mctsSequence.length) {
+                    buildTreeIncremental();
+                } else {
                     startEvolution();
                 }
             }
@@ -644,7 +598,7 @@
         function resetDemo() {
             isRunning = false;
             isPaused = false;
-            currentStep = 0;
+            mctsStep = 0;
             
             if (animationTimeout) {
                 clearTimeout(animationTimeout);
@@ -654,24 +608,16 @@
             document.getElementById("evolutionSteps").innerHTML = "";
             updateStatus("Ready to start MCTS Tree + Evolution demo");
             
-            initializeTree();
+            // Reset to empty state
+            const treeArea = document.getElementById("treeArea");
+            treeArea.innerHTML = '<div class="empty-tree">Click "Start Demo" to watch MCTS build the tree</div>';
         }
 
         function updateStatus(message) {
             document.getElementById("status").textContent = message;
         }
 
-        // Initialize on load
-        window.addEventListener('load', () => {
-            initializeTree();
-        });
-
-        // Handle window resize
-        window.addEventListener('resize', () => {
-            if (!isRunning) {
-                initializeTree();
-            }
-        });
+        // NO automatic initialization - only when user clicks start!
     </script>
 </body>
 </html>
