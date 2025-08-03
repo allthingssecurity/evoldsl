@@ -92,9 +92,10 @@
 
         .tree-svg {
             width: 100%;
-            height: 500px;
+            height: 600px;
             background: rgba(255, 255, 255, 0.05);
             border-radius: 10px;
+            overflow: visible;
         }
 
         .node {
@@ -374,6 +375,28 @@
         ];
 
         let svg, g, tree, root;
+        let currentNodes = [];
+        let currentLinks = [];
+        let mctsStep = 0;
+
+        // Flatten tree data for incremental building
+        const mctsSequence = [
+            { name: "Root\nAPI Call", score: 0.5, x: 0, y: 0, parent: null, id: 0 },
+            { name: "GET /stocks\n{symbol: NVDA}", score: 0.65, x: -200, y: 100, parent: 0, id: 1 },
+            { name: "GET /market\n{sector: tech}", score: 0.58, x: 0, y: 100, parent: 0, id: 2 },
+            { name: "POST /analysis\n{data: combined}", score: 0.71, x: 200, y: 100, parent: 0, id: 3 },
+            { name: "Process\nResponse", score: 0.72, x: -300, y: 200, parent: 1, id: 4 },
+            { name: "Error\nHandling", score: 0.68, x: -100, y: 200, parent: 1, id: 5 },
+            { name: "Filter\nResults", score: 0.62, x: 0, y: 200, parent: 2, id: 6 },
+            { name: "ML Model\nPrediction", score: 0.82, x: 200, y: 200, parent: 3, id: 7 },
+            { name: "Format\nData", score: 0.75, x: -350, y: 300, parent: 4, id: 8 },
+            { name: "Calculate\nMetrics", score: 0.78, x: -250, y: 300, parent: 4, id: 9 },
+            { name: "Retry\nLogic", score: 0.70, x: -100, y: 300, parent: 5, id: 10 },
+            { name: "Sort by\nVolume", score: 0.64, x: -50, y: 300, parent: 6, id: 11 },
+            { name: "Top 10\nStocks", score: 0.66, x: 50, y: 300, parent: 6, id: 12 },
+            { name: "Feature\nEngineering", score: 0.85, x: 150, y: 300, parent: 7, id: 13 },
+            { name: "Ensemble\nMethod", score: 0.88, x: 250, y: 300, parent: 7, id: 14 }
+        ];
 
         function initializeTree() {
             const container = d3.select("#treeSvg");
@@ -387,42 +410,11 @@
                 .attr("height", height);
 
             g = svg.append("g")
-                .attr("transform", `translate(${width/2},50)`);
+                .attr("transform", `translate(${width/2},80)`);
 
-            tree = d3.tree().size([width - 200, height - 100]);
-            root = d3.hierarchy(treeData);
-            
-            tree(root);
-
-            // Add links
-            g.selectAll(".link")
-                .data(root.links())
-                .enter().append("path")
-                .attr("class", "link")
-                .attr("d", d3.linkVertical()
-                    .x(d => d.x)
-                    .y(d => d.y));
-
-            // Add nodes
-            const node = g.selectAll(".node")
-                .data(root.descendants())
-                .enter().append("g")
-                .attr("class", d => `node ${d.depth === 0 ? 'root' : 'explored'}`)
-                .attr("transform", d => `translate(${d.x},${d.y})`);
-
-            node.append("circle")
-                .attr("r", 20);
-
-            node.append("text")
-                .attr("dy", "0.35em")
-                .style("font-size", "10px")
-                .text(d => d.data.name.split('\n')[0]);
-
-            node.append("text")
-                .attr("dy", "1.5em")
-                .style("font-size", "8px")
-                .style("opacity", 0.8)
-                .text(d => d.data.score);
+            currentNodes = [];
+            currentLinks = [];
+            mctsStep = 0;
         }
 
         function startDemo() {
@@ -441,43 +433,90 @@
 
         function runMCTSPhase() {
             if (!isRunning || isPaused) return;
+            
+            mctsStep = 0;
+            buildTreeIncremental();
+        }
 
-            const nodes = g.selectAll(".node");
-            const links = g.selectAll(".link");
-
-            // Animate MCTS exploration
-            nodes.transition()
-                .duration(500)
-                .delay((d, i) => i * 200)
-                .style("opacity", 1);
-
-            links.transition()
-                .duration(500)
-                .delay((d, i) => i * 200)
-                .style("opacity", 1);
-
-            // After MCTS exploration, start selection
-            animationTimeout = setTimeout(() => {
-                if (isRunning && !isPaused) {
-                    selectBestPath();
+        function buildTreeIncremental() {
+            if (!isRunning || isPaused || mctsStep >= mctsSequence.length) {
+                if (mctsStep >= mctsSequence.length) {
+                    // MCTS complete, start selection
+                    setTimeout(() => {
+                        if (isRunning && !isPaused) {
+                            selectBestPath();
+                        }
+                    }, 1000);
                 }
-            }, 3000);
+                return;
+            }
+
+            const nodeData = mctsSequence[mctsStep];
+            updateStatus(`🌳 MCTS Iteration ${mctsStep + 1}: Exploring ${nodeData.name.split('\n')[0]}...`);
+
+            // Add link first if not root
+            if (nodeData.parent !== null) {
+                const parentNode = currentNodes.find(n => n.id === nodeData.parent);
+                if (parentNode) {
+                    const link = g.append("path")
+                        .attr("class", "link")
+                        .attr("d", `M${parentNode.x},${parentNode.y}L${nodeData.x},${nodeData.y}`)
+                        .style("opacity", 0);
+
+                    link.transition()
+                        .duration(500)
+                        .style("opacity", 1);
+
+                    currentLinks.push({ source: parentNode, target: nodeData, element: link });
+                }
+            }
+
+            // Add node
+            const nodeGroup = g.append("g")
+                .attr("class", `node ${mctsStep === 0 ? 'root' : 'explored'}`)
+                .attr("transform", `translate(${nodeData.x},${nodeData.y})`)
+                .style("opacity", 0);
+
+            nodeGroup.append("circle")
+                .attr("r", 18);
+
+            nodeGroup.append("text")
+                .attr("dy", "-0.2em")
+                .style("font-size", "9px")
+                .text(nodeData.name.split('\n')[0]);
+
+            nodeGroup.append("text")
+                .attr("dy", "1.2em")
+                .style("font-size", "8px")
+                .style("opacity", 0.8)
+                .text(nodeData.score);
+
+            // Animate node appearance
+            nodeGroup.transition()
+                .duration(500)
+                .style("opacity", 1);
+
+            currentNodes.push({ ...nodeData, element: nodeGroup });
+            mctsStep++;
+
+            // Continue building tree
+            setTimeout(() => {
+                buildTreeIncremental();
+            }, 800);
         }
 
         function selectBestPath() {
             updateStatus("🎯 Selecting best path for evolution...");
 
-            // Find and highlight the best path (highest scoring)
-            const bestPath = findBestPath(root);
+            // Find the best path from our current nodes (highest scoring leaf)
+            const bestPath = findBestPathFromNodes();
             
             // Highlight selected nodes and links
             bestPath.nodes.forEach((node, i) => {
                 setTimeout(() => {
                     if (!isRunning || isPaused) return;
                     
-                    g.selectAll(".node")
-                        .filter(d => d === node)
-                        .classed("selected", true);
+                    node.element.classed("selected", true);
                 }, i * 300);
             });
 
@@ -485,9 +524,7 @@
                 setTimeout(() => {
                     if (!isRunning || isPaused) return;
                     
-                    g.selectAll(".link")
-                        .filter(d => d === link)
-                        .classed("selected", true);
+                    link.element.classed("selected", true);
                 }, i * 300);
             });
 
@@ -499,29 +536,39 @@
             }, 2000);
         }
 
-        function findBestPath(root) {
-            let bestPath = { nodes: [root], links: [], score: root.data.score };
-            
-            function traverse(node, currentPath, currentLinks) {
-                if (!node.children || node.children.length === 0) {
-                    if (node.data.score > bestPath.score) {
-                        bestPath = {
-                            nodes: [...currentPath, node],
-                            links: [...currentLinks],
-                            score: node.data.score
-                        };
-                    }
-                    return;
+        function findBestPathFromNodes() {
+            // Find the highest scoring leaf node
+            let bestNode = currentNodes[0];
+            currentNodes.forEach(node => {
+                if (node.score > bestNode.score) {
+                    bestNode = node;
                 }
+            });
 
-                node.children.forEach(child => {
-                    const link = root.links().find(l => l.source === node && l.target === child);
-                    traverse(child, [...currentPath, node], [...currentLinks, link]);
-                });
+            // Trace back to root to get the full path
+            const pathNodes = [];
+            const pathLinks = [];
+            let currentNode = bestNode;
+
+            // Build path from leaf to root
+            while (currentNode) {
+                pathNodes.unshift(currentNode);
+                
+                if (currentNode.parent !== null) {
+                    const parentNode = currentNodes.find(n => n.id === currentNode.parent);
+                    const link = currentLinks.find(l => 
+                        l.source.id === currentNode.parent && l.target.id === currentNode.id
+                    );
+                    if (link) {
+                        pathLinks.unshift(link);
+                    }
+                    currentNode = parentNode;
+                } else {
+                    currentNode = null;
+                }
             }
 
-            traverse(root, [], []);
-            return bestPath;
+            return { nodes: pathNodes, links: pathLinks, score: bestNode.score };
         }
 
         function startEvolution() {
