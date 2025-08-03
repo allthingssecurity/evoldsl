@@ -7,8 +7,11 @@
   <rect x="50" y="80" width="800" height="550" fill="none" stroke="#3b82f6" stroke-width="3" stroke-dasharray="10,5" rx="20"/>
   
   <!-- Title -->
-  <text x="450" y="60" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#1e40af">
-    GPT-4o Enhanced API Composition System
+  <text x="450" y="40" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#1e40af">
+    MCTS + GPT-4o + Self Evolution for API discovering
+  </text>
+  <text x="450" y="65" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#1e40af">
+    novel API Composition scenarios
   </text>
   
   <!-- GPT-4o Neural Network -->

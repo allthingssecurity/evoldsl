@@ -1,6 +1,6 @@
-# GPT-4o Enhanced API Composition System
+# MCTS (Monte Carlo Tree Search) + GPT-4o + Self Evolution for API discovering novel API Composition scenarios
 
-An intelligent API composition system that uses **MCTS (Monte Carlo Tree Search) + GPT-4o + Evolution** to automatically build optimal API chains for business intelligence and data analysis tasks.
+An intelligent API composition system that uses **MCTS (Monte Carlo Tree Search) + GPT-4o + Self Evolution** to automatically discover and build novel API composition scenarios for business intelligence and data analysis tasks.
 
 ![Architecture](architecture_diagram.svg)
 
