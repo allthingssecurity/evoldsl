@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCTS + GPT-4o + Evolution - Live Demo</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .title {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.3em;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+        
+        .demo-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin: 40px 0;
+        }
+        
+        .demo-card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            min-width: 300px;
+            transition: all 0.3s ease;
+        }
+        
+        .demo-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+        
+        .demo-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+        
+        .demo-title {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        
+        .demo-description {
+            margin-bottom: 25px;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+        
+        .demo-btn {
+            background: linear-gradient(45deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .demo-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        .features {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px;
+            margin: 40px auto;
+            max-width: 800px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .features h3 {
+            text-align: center;
+            font-size: 2em;
+            margin-bottom: 30px;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .feature {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            border-left: 4px solid #10b981;
+        }
+        
+        .feature-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .github-link {
+            text-align: center;
+            margin: 40px 0;
+        }
+        
+        .github-btn {
+            background: linear-gradient(45deg, #333, #555);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .github-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="title">🧠 MCTS + GPT-4o + Evolution</h1>
+        <p class="subtitle">Discovering Novel API Composition Scenarios</p>
+    </div>
+    
+    <div class="demo-links">
+        <div class="demo-card">
+            <div class="demo-icon">🎬</div>
+            <div class="demo-title">Interactive Animation</div>
+            <div class="demo-description">
+                Watch the complete MCTS + Evolution process unfold with a real financial dashboard example. 
+                See GPT-4o guidance, tree exploration, and evolution optimization in action.
+            </div>
+            <a href="animated_demo.html" class="demo-btn">🚀 Launch Demo</a>
+        </div>
+        
+        <div class="demo-card">
+            <div class="demo-icon">🏗️</div>
+            <div class="demo-title">System Architecture</div>
+            <div class="demo-description">
+                Explore the clean 3-phase architecture diagram showing how MCTS, Evolution, 
+                and Self-Evolution work together to discover novel API compositions.
+            </div>
+            <a href="architecture_diagram.svg" class="demo-btn">📊 View Architecture</a>
+        </div>
+    </div>
+    
+    <div class="features">
+        <h3>🌟 Key Features</h3>
+        <div class="feature-grid">
+            <div class="feature">
+                <div class="feature-icon">🌳</div>
+                <h4>MCTS Tree Search</h4>
+                <p>Systematic exploration of API composition space with UCB1 selection and GPT-4o guidance</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">🧬</div>
+                <h4>Evolution Engine</h4>
+                <p>Genetic optimization of API chains through intelligent mutations and natural selection</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">🤖</div>
+                <h4>GPT-4o Integration</h4>
+                <p>AI-powered policy and value networks for semantic understanding and intelligent guidance</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">♾️</div>
+                <h4>Self-Evolution</h4>
+                <p>Continuous improvement through environmental adaptation and novel scenario discovery</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">🎯</div>
+                <h4>Real-time Visualization</h4>
+                <p>Professional React frontend with live MCTS tree construction and evolution progress</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">🔗</div>
+                <h4>25+ API Bank</h4>
+                <p>Comprehensive API repository with type safety and compatibility checking</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="github-link">
+        <a href="https://github.com/allthingssecurity/evoldsl" class="github-btn">
+            📚 View Full Documentation & Code
+        </a>
+    </div>
+</body>
+</html>
